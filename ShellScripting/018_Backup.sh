@@ -14,9 +14,9 @@ function backup {
         echo "File does not exist"
     fi
     cp $backupfile /tmp/backupfile
-    echo $?
+    #echo $?
     if [ $? -ne 0 ]; then #ne is not equal to
-        echo "Backup failed $?"
+        echo "Backup failed"
     fi
 }
 backup
