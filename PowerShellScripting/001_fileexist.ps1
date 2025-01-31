@@ -1,5 +1,7 @@
-#power shell script to check whether the desktop folder exists or not and listing files
-
+#Author: Gowri Sankar Marepalli
+#Purpose: Learning basic powershell scripting
+#Usage: sh Filename.sh or ./filename.sh
+#Program: power shell script to check whether the desktop folder exists or not and listing files
 $folderpath = Read-Host "Enter the folder path"
 if( Test-Path $folderpath)
 {
