@@ -1,4 +1,4 @@
-<H1>List of Repositories created to understand Git and Github</H1><br>
+<H1>List of Repositories created to understand Git and Github Concepts</H1><br>
 <H2> Pushing a repo created in local to github <H2><br>
 https://github.com/Gowrisankar5877/gitpush<br>
 <H2>Learning Stashing</H2><br>
