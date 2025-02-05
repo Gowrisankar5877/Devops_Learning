@@ -1,5 +1,6 @@
 #Printing nth largest and nth smallest from list
 import heapq
+l=[1,2,4,5,10,20,30,11,44]
 n = int(input("Enter the nth number which you want largest and smallest number"))
 heapq.heapify(l)
 nth_maximum = heapq.nlargest(n,l)
