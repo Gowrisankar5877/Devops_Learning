@@ -1,0 +1,11 @@
+days = ("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+owndays = ("Gowriday","Sankarday")
+print(days[0:2])
+print(len(days))
+print(days[0])
+print(days+owndays)
+days+=owndays
+print(days)
+days=list(days)
+print(type(days))
+print(days)
