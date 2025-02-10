@@ -7,7 +7,7 @@ print(mysum(2,4))
 
 print((lambda a,b: a+b) (2,3))
 
-#Example orf lambda function in other function
+#Example orf lambda frunction in other function
 def power(x):
     return lambda n: x**n
 print(power(4)(2))
