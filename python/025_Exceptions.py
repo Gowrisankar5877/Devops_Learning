@@ -6,3 +6,5 @@ except ValueError:
     print("Value Error Arises")
 except ZeroDivisionError:
     print("Zero Division Error")
+finally:
+    print("Always executes")
