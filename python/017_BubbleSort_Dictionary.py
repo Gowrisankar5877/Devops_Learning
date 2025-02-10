@@ -12,7 +12,6 @@ def sort_dict_keys_and_values(d):
     sorted_dict = {}
     for key in keys:
         sorted_dict[key] = bubble_sort(d[key])  
-    
     return sorted_dict
 
 data = {
@@ -20,6 +19,5 @@ data = {
     "apple": [90, 85, 92, 88, 76],
     "cherry": ["z", "m", "a", "k", "b"]
 }
-
 sorted_data = sort_dict_keys_and_values(data)
 print(sorted_data)
