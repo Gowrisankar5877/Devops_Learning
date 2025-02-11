@@ -1,10 +1,9 @@
 import os
 import time
-
 def create_files(directory, file_names):
     if not os.path.exists(directory):
-        os.makedirs(directory)
-    
+        #os.makedirs(directory)
+        os.mkdir(directory)
     for file_name in file_names:
         file_path = os.path.join(directory, file_name)
         with open(file_path, 'w') as file:
@@ -22,7 +21,7 @@ def delete_files(directory, file_names, delay):
             print(f"File not found: {file_path}")
 
 directory = input("Enter Directory Path")
-file_names = list(map(str,input("Enter file names to create and delete").split(" ")))
+file_names = list(input("Enter file names to create and delete").split(" "))
 delay = 10  
 create_files(directory, file_names)
-delete_files(directory, file_names, delay)
+#delete_files(directory, file_names, delay)
