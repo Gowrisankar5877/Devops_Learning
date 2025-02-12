@@ -24,4 +24,4 @@ directory = input("Enter Directory Path")
 file_names = list(input("Enter file names to create and delete").split(" "))
 delay = 10  
 create_files(directory, file_names)
-#delete_files(directory, file_names, delay)
+delete_files(directory, file_names, delay)
