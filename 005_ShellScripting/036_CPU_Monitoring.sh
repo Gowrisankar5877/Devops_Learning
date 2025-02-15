@@ -1,103 +1,62 @@
 #!/bin/bash
 
-# Configurations
-CPU_THRESHOLD=60   # CPU usage limit in percentage
-MONITOR_INTERVAL=5 # Interval in seconds to check CPU usage
-EXCLUDED_PROCESSES=("code.exe" "cmd.exe" "python.exe" "pwsh.exe")  # Do not kill
-RESTART_PROCESSES=("chrome.exe" "notepad.exe" "powershell.exe")  # Restart these after killing
-EMAIL="mgowrisankar5877@gmail.com"  # Replace with your email
+# Configuration
+CPU_THRESHOLD=60  # Set CPU usage limit in percentage
+MONITOR_INTERVAL=5  # Interval in seconds to check CPU usage
+EMAIL="your-email@gmail.com"
 
-# Function to check if a process should be excluded
-should_exclude() {
-    local process=$1
-    for excluded in "${EXCLUDED_PROCESSES[@]}"; do
-        if [[ "$process" == "$excluded" ]]; then
-            return 0  # Found in exclusion list
-        fi
-    done
-    return 1  # Not in exclusion list
+# Function to check if a process is a system process
+is_system_process() {
+    local proc_name="$1"
+    if [[ "$proc_name" == *"systemd"* || "$proc_name" == *"init"* || "$proc_name" == *"kthreadd"* || "$proc_name" == *"rcu"* ]]; then
+        return 0  # System process (do not kill)
+    fi
+    return 1  # Not a system process
 }
 
-# Function to check if a process should be restarted
-should_restart() {
-    local process=$1
-    for restart in "${RESTART_PROCESSES[@]}"; do
-        if [[ "$process" == "$restart" ]]; then
-            return 0  # Found in restart list
-        fi
-    done
-    return 1  # Not in restart list
-}
-
-# Function to send email alert (Using PowerShell for Windows)
-send_alert() {
-    local cpu_usage=$1
-    powershell.exe -Command "
-        \$SMTPServer = 'smtp.gmail.com';
-        \$SMTPPort = 587;
-        \$Username = 'mgowrisankar5877@gmail.com';
-        \$Password = ConvertTo-SecureString 'mail password' -AsPlainText -Force;
-        \$Credential = New-Object System.Management.Automation.PSCredential (\$Username, \$Password);
-        \$Message = New-Object System.Net.Mail.MailMessage;
-        \$Message.From = 'mgowrisankar5877@gmail.com';
-        \$Message.To.Add('marepalligowrisankar999@gmail.com');
-        \$Message.Subject = '⚠️ High CPU Usage Alert';
-        \$Message.Body = 'CPU usage exceeded threshold: ${cpu_usage}% on $(hostname) at $(date)';
-        \$SMTP = New-Object Net.Mail.SmtpClient (\$SMTPServer, \$SMTPPort);
-        \$SMTP.EnableSsl = \$true;
-        \$SMTP.Credentials = \$Credential;
-        \$SMTP.Send(\$Message);
-    "
-}
-
-# Function to restart a process
+# Function to restart application process
 restart_process() {
-    local process=$1
-    echo "🔄 Restarting $process..."
-    nohup "$process" &>/dev/null &
+    local process_name="$1"
+    pid=$(pgrep -f "$process_name")
+    
+    if [[ -n "$pid" ]]; then
+        echo "Restarting application process: $process_name"
+        kill -9 "$pid"
+        sleep 2
+        nohup "$process_name" &>/dev/null &
+        echo "Application process restarted: $process_name"
+    else
+        echo "No process found with name: $process_name"
+    fi
 }
 
-# Function to monitor CPU usage
-monitor_cpu() {
-    while true; do
-        CPU_USAGE=$(wmic cpu get loadpercentage | awk 'NR==2 {print $1}')
-        
-        if [[ -n "$CPU_USAGE" && $CPU_USAGE -gt 0 ]]; then
-            echo "Current CPU Usage: $CPU_USAGE%"
+# Function to send an email alert
+send_email() {
+    local process_name="$1"
+    local cpu_usage="$2"
+    
+    echo -e "High CPU Usage Detected!\n\nProcess: $process_name\nCPU Usage: $cpu_usage%" | mail -s "CPU Alert: $process_name" "$EMAIL"
+    echo "Email alert sent for $process_name using $cpu_usage%"
+}
+
+# Monitor CPU usage
+while true; do
+    echo "Checking CPU usage..."
+    
+    # Get top CPU-consuming processes
+    ps -eo pid,comm,%cpu --sort=-%cpu | awk -v threshold="$CPU_THRESHOLD" 'NR>1 {if ($3 > threshold) print $1, $2, $3}' | while read pid name cpu_usage; do
+        echo "High CPU usage detected: $name using $cpu_usage%"
+
+        if is_system_process "$name"; then
+            send_email "$name" "$cpu_usage"
+        elif [[ "$name" == "yourApp" ]]; then
+            restart_process "$name"
         else
-            echo "⚠️ Could not retrieve CPU usage."
-            CPU_USAGE=0
+            echo "Killing non-essential process: $name"
+            kill -9 "$pid"
         fi
-
-        if [[ $CPU_USAGE -gt $CPU_THRESHOLD ]]; then
-            echo "⚠️ High CPU detected: $CPU_USAGE%. Checking processes..."
-            send_alert "$CPU_USAGE"  # Send email alert
-
-            # Get processes consuming CPU > CPU_THRESHOLD
-            wmic process get Name,ProcessId,CommandLine | awk 'NR>1 {print $1, $2}' | while read -r process pid; do
-                if [[ -z "$process" || -z "$pid" ]]; then
-                    continue  # Skip empty lines
-                fi
-
-                should_exclude "$process"
-                if [[ $? -eq 0 ]]; then
-                    echo "✅ Skipping: $process (Protected)"
-                else
-                    should_restart "$process"
-                    if [[ $? -eq 0 ]]; then
-                        echo "🔄 Restarting $process (PID: $pid)"
-                        taskkill /F /PID "$pid"
-                        restart_process "$process"
-                    else
-                        echo "❌ Killing non-essential process: $process (PID: $pid)"
-                        taskkill /F /PID "$pid"
-                    fi
-                fi
-            done
-        fi
-        sleep "$MONITOR_INTERVAL"
     done
-}
+    
+    sleep "$MONITOR_INTERVAL"
+done
 
-# Start Monitoring
-monitor_cpu
